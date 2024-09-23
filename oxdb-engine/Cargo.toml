@@ -2,5 +2,10 @@
 name = "oxdb-engine"
 version = "0.1.0"
 edition = "2021"
+authors = ["Lokeshwaran M <lokeshwaran.m23072003@gmail.com"]
+description = "An OX-AI database in Rust"
+repository = "https://github.com/ox-ai/oxdb-engine.git"
+license = "MIT"
+
 
 [dependencies]
