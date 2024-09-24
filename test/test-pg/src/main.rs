@@ -39,7 +39,7 @@ fn test_blockfile() -> io::Result<()> {
 
 
 fn main() {
-    println!("Hello, world!");
+    println!("ox Hello, world!");
     test_blockfile().unwrap(); // Will panic on error
 
     
