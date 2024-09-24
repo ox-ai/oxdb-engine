@@ -1,8 +1,6 @@
 # oxdb-engine
-oxdb-engine 
 
-
-
+> ## oxdb-engine - in Dev
 
 
 # Architectural Design [ Oxdb ] :
@@ -50,11 +48,11 @@ oxdbin = ox data binary # an ox standard bin data representation
 # record :
 oxdbin  = Identifier   | keystr n bytes  |Size| Data  | 
 record  =   r : record | keys_str+"\x00" |  8 | Data  |
-planid  =   p : schema |                   int or str |
+planid  =   p : schema |               i int or s str |
 
 # uri :
 oxdbin  = Identifier   |Size| Data  | 
-uri     =   x : uri    | 4  | str
+uri     =   x : uri    | 4  | s str |
 del     =   n : delbyte| 4  | # may packed with "\x00" but ignored
 
 # nums : no size rep direct data 
@@ -74,7 +72,7 @@ map     =   m : hashmap | 4  | s str , t any |
 
 #custom :
 oxdbin  = Identifier    | cID | cData  | 
-cstm    =   c : custom  | str | str    | #Custom type 
+cstm    =   c : custom  | str | t any  | #Custom type 
 
 
 type t : any = [ r , p , x , n , i , f , s , l , v , m , c]
