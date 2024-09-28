@@ -16,6 +16,8 @@ use winapi::um::fileapi::GetDiskFreeSpaceA;
 
 // Constants
 const DEFAULT_BLOCK_SIZE: usize = 4096; // 4KB fallback block size
+// const DEFAULT_PAGE_NUM:usize = 16;
+// const DEFAULT_PAGE_SIZE: usize = DEFAULT_PAGE_NUM * DEFAULT_BLOCK_SIZE;
 
 // Struct representing the block-based file handler
 pub struct BlockFile {

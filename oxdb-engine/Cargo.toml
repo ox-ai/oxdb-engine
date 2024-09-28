@@ -10,3 +10,4 @@ license = "MIT"
 
 [dependencies]
 winapi = {version = "0.3" ,features = ["fileapi"]}
+serde_json = "1.0"
