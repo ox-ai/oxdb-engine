@@ -7,4 +7,4 @@ pub mod server;
 pub mod shell;
 pub mod utils;
 pub mod oxdbin;
-
+pub mod config;

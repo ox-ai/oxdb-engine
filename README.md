@@ -2,6 +2,7 @@
 
 > ## oxdb-engine - in Dev
 
+
 # Architectural Design [ Oxdb ] :
 
 ## compressed design :
@@ -89,7 +90,7 @@ cstm    =   c : custom  | 4  |str   | t any  | #Custom type
 # uri units :
 # starts with 4b resents size ends with "\x00"
 oxdbin  = Identifier:size+n*cData+"\x00"
-sid     = xsid:4b+2b+2b+2b+....+n*2b+"\x00"     # stream of bytes 
+sid     = xsid:4b+4b+4b+4b+....+n*4b+"\x00"     # stream of bytes 
 pid     = xpid:4b+4b+4b+4b+....+n*4b+"\x00"     # used to store lookups
 zid     = xzid:4b+4b+4b+4b+....+n*4b+"\x00"     #- schema id or plan
 iid     = xiid:4b+4b+4b+4b+....+n*4b+"\x00"     #- unique num id of rec
@@ -104,30 +105,18 @@ uid     = xuid:str+str+........+n*str+"\x00"    #- (uuid or unique keystr named)
 db : {
     doc : {
         pid : 4b = dynamic False : {
-            sid : 4b+..+n*2b+"\x00" True  ,
-            rec : 0 4b : size 8b : doc_config "\x00" : = dynamic True : {
-                    pagecount : pc 4b = dynamic True ,
-                    pagesize  : psz 3b (n 1b * blocksz 2b) = 16 * 4Kb = 64kb True ,
-        zid : 4b+..+n*4b+"\x00" Optional , # meaning only valid inside db scope
-
-        }
-
-        }
-        pid : 4b = dynamic False : {
-
-            sid : 4b+..+n*2b+"\x00" True  ,
-            rec : iid 4b : size 8b : uid nb+"\x00" : = dynamic True : {
+            pagesize  : psz (n 1b * blocksz 2b) = 16 * 4Kb = 64kb
+            sid : 4b+..+n*4b+"\x00" True  ,
+            rec : iid 4b : size 4b : uid nb+"\x00" : = dynamic True : {
                     data : type t : any = [ r , x , n , i , f , s , l , v , m , c ]
                 }
-            
         }
     }
 }
 # example in bin
 basedb : {
     basedoc : {
-        xsid 1 20 "\x00" r 0 size doc_config "\x00" m 3 s pagecount i 2 s pagesize i 65536,xzid l 2 11910 19189 "\x00"
-        xsid 2 23 45 "\x00"   r 101 10b "key1" "\x00" data r 256 "key2" "\x00" data
+        pagesize i 2 4096 xsid l 2 23 45 "\x00" r 101 10b "key1" "\x00" data r 256 "key2" "\x00" data
     }
 }
 # uri for above sample
@@ -146,13 +135,15 @@ pid -> sid -> recpos -> rec
 #--------doc----------
 # end of streamed data will be marked by "\x0"
 # an doc 0-pos contain (in 0th page) start of doc
-pagecount  : 8b
-pagesize   : 3b (n : 1b * blocksz : 2b) = 16*4Kb=64kb
-zid        : 4b+n*4b+"\x00"
+pagesize   : (n : 1b * blocksz : 2b) = 16*4Kb=64kb
 #--------pag----------
 # page in linar read initial look up will be sid
 xsid:4b+2b+2b+2b+"\x00"
-records
+records = {
+    i iid
+    u uid
+    d data
+}
 #---------------------
 
 
@@ -160,7 +151,7 @@ records
 # index storage :
 # - proto-1 :
 # sorted continues sequence of nums
-iid : 4b -> pid : 4b , sid : 2b
+iid : 4b ->pid : 4b , sid : 4b
 # o(1) look up with ridpos = iid * 10b
 #  - proto-2 :
 # Btree index
@@ -171,7 +162,7 @@ iid -> pid , sid
 #---------------------------------------------
 # Transaction :
 #each opreation is Transc by default
-start edit
+begin edit
 multiple operations
 end commit
 # flushed after commit to disk

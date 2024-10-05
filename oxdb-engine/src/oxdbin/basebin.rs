@@ -122,6 +122,12 @@ pub fn decode(data: &[u8], pos: usize) -> (serde_json::Value, usize) {
             }
             (serde_json::Value::Object(map), new_pos)
         }
+
+        'n' => {
+            let (_, new_pos) = decode_n(data, pos);
+            (serde_json::Value::String("null".to_owned()), new_pos)
+        },
+
         _ => {
             // Catch-all case for unsupported types
             panic!(
@@ -134,12 +140,12 @@ pub fn decode(data: &[u8], pos: usize) -> (serde_json::Value, usize) {
 
 pub fn encode_n(totbytelen: usize) -> Vec<u8> {
     let datalen = totbytelen - 5;
-    let mut deldata = vec![0u8; datalen]; // creates a byte array of 0s of length `datalen`
+    // let mut deldata = vec![0u8; datalen]; // creates a byte array of 0s of length `datalen`
 
     let mut result = Vec::new();
     result.push(b'n'); // 'n' as the data type identifier
     result.extend(&(datalen as u32).to_be_bytes()); // add the length of the data
-    result.append(&mut deldata); // append the zeroed data
+    // result.append(&mut deldata); // append the zeroed data
 
     result
 }
@@ -160,7 +166,6 @@ pub fn decode_n(
 }
 #[test]
 fn main() {
-    // Example usage
     // Example usage
     let data = serde_json::json!({
         "name": "record",

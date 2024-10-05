@@ -1,40 +1,46 @@
+use std::cmp::max;
+
+use crate::config::default;
+
+
+
 
 
 #[allow(unused)]
 
-
-
-
-const PAGE_SIZE: usize = 64 * 1024; // 64 KB
-
-#[allow(unused)]
+struct DelStore {
+    
+}
 struct SlottedPage {
-    xsid: u8,                 // Page start position of slotted array
-    total_slots: u16,          // Number of slots
-    slot_positions: Vec<u16>,  // Positions of byte data in the page
-    data: Vec<u8>,             // Actual byte data stored in the page
+    page_len: u16,            // page lene which is n
+    total_slots: u32,         // Number of slots
+    slot_positions: Vec<u32>, // Positions of byte data in the page
+    data: Vec<u8>,            // Actual byte data stored in the page
+    page_size: u32,
 }
 #[allow(unused)]
 impl SlottedPage {
-    pub fn new(xsid: u8) -> Self {
+    pub fn new(page_len: u16) -> Self {
         Self {
-            xsid,
+            page_len,
             total_slots: 0,
             slot_positions: Vec::new(),
             data: Vec::new(),
+            page_size: page_len as u32 * default::BLOCK_SIZE as u32,
         }
     }
 
     fn can_fit(&self, bytedata_size: usize, new_slots: usize) -> bool {
-        // Size required for the header: 4 bytes (xsid + total_slots) + slot position array
-        let header_size = 4 + 2 * (self.total_slots as usize + new_slots);
+        // Size required for the header :
+        // (2 byte pagelen + 2 byte blocksize +2 * total_slots bytes) + slot position array
+        let header_size = 1 + 2 + 2 * (self.total_slots as usize + new_slots);
         let total_size = header_size + self.data.len() + bytedata_size;
-        total_size <= PAGE_SIZE
+        total_size <= self.page_size as usize
     }
 
     fn add_data(&mut self, bytedata: Vec<u8>) {
         // Add the position of the new data (relative to the start of the data section)
-        let new_data_position = (PAGE_SIZE - self.data.len() - bytedata.len()) as u16;
+        let new_data_position = (self.page_size as usize - self.data.len() - bytedata.len()) as u32;
         self.slot_positions.push(new_data_position);
 
         // Add the data itself
@@ -45,23 +51,23 @@ impl SlottedPage {
     }
 }
 
-
 #[allow(unused)]
-struct SlottedPageManager {
+pub struct SlottedPageManager {
     pages: Vec<SlottedPage>,
 }
 #[allow(unused)]
 impl SlottedPageManager {
     pub fn new() -> Self {
-        Self {
-            pages: Vec::new(),
-        }
+        Self { pages: Vec::new() }
     }
 
     pub fn push(&mut self, bytedataarray: Vec<Vec<u8>>) -> Vec<(Vec<usize>, Vec<u8>)> {
-        let mut page_index = 0;
+        let mut page_len = max(
+            ((((bytedataarray[0].len() + 2 + 2 + 4 + 4) as f64 / default::BLOCK_SIZE as f64).ceil()) as u16),
+            default::MAX_PAGE_LEN,
+        );
         let mut results: Vec<(Vec<usize>, Vec<u8>)> = Vec::new();
-        let mut current_page = SlottedPage::new(page_index as u8);
+        let mut current_page = SlottedPage::new(page_len as u16);
 
         let mut data_indices: Vec<usize> = Vec::new();
         for (i, bytedata) in bytedataarray.into_iter().enumerate() {
@@ -75,8 +81,11 @@ impl SlottedPageManager {
                 results.push((data_indices.clone(), page_bytes));
 
                 // Start a new page
-                page_index += 1;
-                current_page = SlottedPage::new(page_index as u8);
+                let mut page_len = max(
+                    ((((bytedata.len() + 2 + 2 + 4 + 4) as f64 / default::BLOCK_SIZE as f64).ceil()) as u16),
+                    default::MAX_PAGE_LEN,
+                );
+                current_page = SlottedPage::new(page_len);
                 data_indices.clear();
 
                 // Add the byte data to the new page
@@ -95,8 +104,9 @@ impl SlottedPageManager {
     fn create_page_bytes(&self, page: &SlottedPage) -> Vec<u8> {
         let mut result = Vec::new();
 
-        // Add the xsid (1 byte)
-        result.push(page.xsid);
+        // Add pagelen blocksize 
+        result.extend(&(page.page_len).to_be_bytes());
+        result.extend(&default::BLOCK_SIZE.to_be_bytes());
 
         // Add the total number of slots (2 bytes)
         result.extend(&(page.total_slots).to_be_bytes());
@@ -107,8 +117,15 @@ impl SlottedPageManager {
         }
 
         // Add padding if necessary (align slot position data and the actual data)
-        let slot_section_len = 4 + 2 * page.total_slots as usize;
-        let padding_len = PAGE_SIZE - slot_section_len - page.data.len();
+        let slot_section_len = 2 + 2 + 4 + 4 * page.total_slots as usize;
+        println!(
+            "l:{} , {}, {}",
+            page.page_size as usize,
+            slot_section_len,
+            page.data.len()
+        );
+        let padding_len = page.page_size as usize - slot_section_len - page.data.len();
+
         if padding_len > 0 {
             result.extend(vec![0u8; padding_len]);
         }
@@ -120,27 +137,26 @@ impl SlottedPageManager {
     }
 }
 
-
-
 #[test]
 fn main() {
     let mut manager = SlottedPageManager::new();
-    let sam  = vec![0u8; 1 * 10];
-    println!("{:?}",sam);
+    let sam = vec![0u8; 1 * 10];
+    println!("{:?}", sam);
     let bytedataarray = vec![
         vec![0u8; 20 * 1024], // 20 KB data
         vec![0u8; 50 * 1024], // 50 KB data
         vec![0u8; 10 * 1024], // 10 KB data
         vec![0u8; 10 * 1024], // 10 KB data
+        vec![0u8; 80 * 1024], // 80 KB data
+        vec![0u8; 1 * 1024],
+        vec![0u8; 2 * 1024],
+        vec![0u8; 3 * 1024],
     ];
 
     let result = manager.push(bytedataarray);
 
     for (indices, page) in result {
         println!("Data indices: {:?}", indices);
-        println!("Slotted page: {:?}", page[25]);
+        println!("Slotted page: {:?}", &page[1..25]);
     }
 }
-
-
-
