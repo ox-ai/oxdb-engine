@@ -13,11 +13,11 @@ fn main() -> io::Result<()> {
     println!("Block size (from temp file): {}", block_size);
 
     // 2. Create an instance and then use the instance to get the block size
-    let file_path = "db_file.db";
-    let mut block_file = DocBlock::new(file_path)?;
+    let file_path = "data.oxd";
+    let mut doc_block = DocBlock::new(file_path)?;
     println!(
         "Block size (from instance): {}",
-        block_file.get_block_size()
+        doc_block.get_block_size()
     );
 
     // // Data to write (less than 4KB, will be padded)
@@ -41,17 +41,17 @@ fn main() -> io::Result<()> {
     
 
     // Write data at the end (append)
-    block_file.write(&encoded_data, None,None)?;
+    doc_block.write(&encoded_data, None,None)?;
 
     // Write data to a specific block index (e.g., index 2)
-    block_file.write(&encoded_data, Some(2),Some(2))?;
+    doc_block.write(&encoded_data, Some(2),Some(2))?;
 
     // Read the first block (index not given)
-    let block = block_file.read(None,None)?;
+    let block = doc_block.read(None,None)?;
     println!("Read block: {:?}", String::from_utf8_lossy(&block));
 
     // Read the block at index 2
-    let block = block_file.read(Some(2),Some(2))?;
+    let block = doc_block.read(Some(2),Some(2))?;
     println!(
         "Read block at index 2: {:?}",
         String::from_utf8_lossy(&block)
