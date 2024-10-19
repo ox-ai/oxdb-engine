@@ -27,7 +27,7 @@ impl DocBlock {
             .open(doc_path)?;
 
         // Get block size dynamically, falling back to the default if necessary
-        let block_size = prop::get_block_size(doc_path).unwrap_or(default::BLOCK_SIZE);
+        let block_size = prop::get_block_size(doc_path).unwrap_or(default::BLOCK_SIZE as usize);
 
         Ok(DocBlock { file, block_size })
     }
@@ -55,7 +55,7 @@ impl DocBlock {
             Some(value) => value,
             None => 1,
         };
-        let page_size = p_len * self.block_size;
+        let page_size: usize = p_len * self.block_size;
         let mut padded_data = data.to_vec();
 
         // Ensure data is exactly one block in size (pad if necessary)

@@ -116,7 +116,7 @@ impl SlottedPageManager {
             result.extend(&position.to_be_bytes());
         }
 
-        // Add padding if necessary (align slot position data and the actual data)
+        
         let slot_section_len = 2 + 2 + 4 + 4 * page.total_slots as usize;
         println!(
             "l:{} , {}, {}",
@@ -124,6 +124,7 @@ impl SlottedPageManager {
             slot_section_len,
             page.data.len()
         );
+        // Add padding if necessary (align slot position data and the actual data)
         let padding_len = page.page_size as usize - slot_section_len - page.data.len();
 
         if padding_len > 0 {

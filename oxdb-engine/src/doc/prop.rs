@@ -21,7 +21,7 @@ pub fn gen_block_size() -> usize {
     let temp_file_path = "/"; //temp_dir().join("temp_block_file");
 
     // Try to get block size using the temporary file, fallback to default
-    let block_size = get_block_size(&temp_file_path).unwrap_or(default::BLOCK_SIZE);
+    let block_size = get_block_size(&temp_file_path).unwrap_or(default::BLOCK_SIZE as usize);
 
     // Clean up: delete the temporary file
     //let _ = std::fs::remove_file(&temp_file_path);

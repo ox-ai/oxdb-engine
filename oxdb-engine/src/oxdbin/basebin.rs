@@ -160,7 +160,7 @@ pub fn decode_n(
         u32::from_be_bytes(data_bytes[pos + 1..pos + 5].try_into().unwrap()) as usize
     };
 
-    let value = 0; // the value for 'n' type is always 0
+    let value: i32 = 0; // the value for 'n' type is always 0
 
     (value, pos + bdsize_len + length)
 }
